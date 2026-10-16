@@ -26,7 +26,10 @@ case "$(uname -m)" in
   *) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
 esac
 
-VERSION=$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest | grep -m1 '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+# Read the whole response before parsing: piping curl into an early-exiting grep fails under pipefail.
+RELEASE_JSON=$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest)
+VERSION=$(sed -nE 's/.*"tag_name": *"v([^"]+)".*/\1/p' <<<"$RELEASE_JSON" | head -n1)
+[ -n "$VERSION" ] || { echo "Could not determine the latest runner version"; exit 1; }
 echo "==> Installing runner v$VERSION ($ARCH) into $DIR"
 mkdir -p "$DIR" && cd "$DIR"
 curl -fsSL -o runner.tar.gz "https://github.com/actions/runner/releases/download/v$VERSION/actions-runner-linux-$ARCH-$VERSION.tar.gz"
