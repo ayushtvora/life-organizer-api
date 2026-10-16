@@ -6,11 +6,11 @@ services:
     env_file: .env
     # Only reachable from the host itself; public traffic comes through the tunnel.
     ports:
-      - "127.0.0.1:${API_PORT:-8080}:8080"
+      - "127.0.0.1:${API_PORT:-8095}:8080"
 
   # Optional: run the Cloudflare Tunnel connector here (`docker compose --profile tunnel up -d`).
   # In the Cloudflare dashboard, point the tunnel's public hostname at http://api:8080.
-  # Skip this if cloudflared already runs elsewhere on the server; point it at http://localhost:8080 instead.
+  # Skip this if cloudflared already runs elsewhere on the server; point it at http://localhost:8095 instead.
   cloudflared:
     image: cloudflare/cloudflared:2026.9.3
     profiles: [tunnel]

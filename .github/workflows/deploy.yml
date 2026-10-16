@@ -36,7 +36,7 @@ jobs:
           GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
           TODOIST_API_TOKEN: ${{ secrets.TODOIST_API_TOKEN }}
           TODOIST_PROJECT_ID: ${{ vars.TODOIST_PROJECT_ID }}
-          API_PORT: ${{ vars.API_PORT || '8080' }}
+          API_PORT: ${{ vars.API_PORT || '8095' }}
           CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
         run: |
           if [ -z "$API_KEY" ]; then echo "::error::API_KEY secret is not set"; exit 1; fi
@@ -67,7 +67,7 @@ jobs:
         run: |
           PORT=$(grep '^API_PORT=' .env | cut -d= -f2)
           for i in $(seq 1 20); do
-            if curl -fsS "http://127.0.0.1:${PORT:-8080}/health"; then echo; exit 0; fi
+            if curl -fsS "http://127.0.0.1:${PORT:-8095}/health"; then echo; exit 0; fi
             sleep 2
           done
           docker compose -p life-organizer logs --tail 100 api

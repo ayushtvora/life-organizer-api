@@ -56,7 +56,7 @@ prepaid credits on platform.claude.com.
 2. Copy the **tunnel token** from the install command (the long string after `--token`). It becomes the
    `CLOUDFLARE_TUNNEL_TOKEN` secret, and the deploy workflow then also runs the `cloudflared` container.
 3. Add a **Public hostname**, for example `organizer.yourdomain.com`, with:
-   - **Service:** `http://api:8080`. Use `http://localhost:8080` if cloudflared runs outside this compose project. In that
+   - **Service:** `http://api:8080`. Use `http://localhost:8095` if cloudflared runs outside this compose project. In that
      case, leave the secret empty.
 
 The API is protected by the `X-API-Key` header. For extra protection you can put a Cloudflare Access application in
@@ -98,7 +98,7 @@ and adds your user to the `docker` group. It asks for your sudo password on the 
 | `TIME_ZONE` | `America/Toronto` (IANA name) |
 | `ANTHROPIC_MODEL` | `claude-haiku-5-5` |
 | `TODOIST_PROJECT_ID` | Inbox |
-| `API_PORT` | `8080` (host port, bound to 127.0.0.1) |
+| `API_PORT` | `8095` (host port, bound to 127.0.0.1) |
 
 ## 8. Deploy and verify
 

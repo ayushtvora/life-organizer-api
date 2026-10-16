@@ -22,7 +22,7 @@ Single user, self-hosted. Optimise for simplicity and correctness over scale.
 dotnet build
 dotnet test
 dotnet run --project src/LifeOrganizer.Api          # http://localhost:5080, Development: key "dev-key", dry run
-docker compose up -d --build                        # local container on 127.0.0.1:8080 (needs .env, see .env.example)
+docker compose up -d --build                        # local container on 127.0.0.1:8095 (needs .env, see .env.example)
 ```
 
 On the user's Windows machine, Smart App Control blocks loading freshly built DLLs, so `dotnet test`/`dotnet run`
@@ -123,7 +123,7 @@ These are decisions the user made; don't change them without asking.
 - `.github/workflows/ci.yml`: build + test on GitHub-hosted runners for PRs and pushes.
 - `.github/workflows/deploy.yml`: on push to `main`, runs on the `self-hosted` runner on the home server, writes
   `.env` from GitHub Secrets and runs `docker compose up -d --build`, then curls `/health`.
-- `cloudflared` runs as an optional compose service (profile `tunnel`) pointing at `http://api:8080`.
+- `cloudflared` runs as an optional compose service (profile `tunnel`) pointing at `http://api:8080`; host port is `127.0.0.1:8095` (`API_PORT`). The server already has an existing host-networked cloudflared, so the public hostname points at `http://localhost:8095` and the compose `cloudflared` stays off.
 - Keep the repo **private**, or never let untrusted PRs run on the self-hosted runner.
 
 User-facing setup docs: `docs/SETUP.md` (Google, Todoist, runner, tunnel) and `docs/SHORTCUT.md` (building the
