@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts run on Linux (scp from a Windows checkout); keep LF.
+*.sh text eol=lf

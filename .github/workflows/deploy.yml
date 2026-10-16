@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test --configuration Release
+
+  deploy:
+    needs: test
+    # The runner installed on the home server (see docs/SETUP.md).
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env from secrets
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          TIME_ZONE: ${{ vars.TIME_ZONE || 'America/Toronto' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-haiku-5-5' }}
+          GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
+          TODOIST_API_TOKEN: ${{ secrets.TODOIST_API_TOKEN }}
+          TODOIST_PROJECT_ID: ${{ vars.TODOIST_PROJECT_ID }}
+          API_PORT: ${{ vars.API_PORT || '8080' }}
+          CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+        run: |
+          if [ -z "$API_KEY" ]; then echo "::error::API_KEY secret is not set"; exit 1; fi
+          umask 077
+          cat > .env <<EOF
+          App__ApiKey=${API_KEY}
+          App__TimeZone=${TIME_ZONE}
+          Anthropic__ApiKey=${ANTHROPIC_API_KEY}
+          Anthropic__Model=${ANTHROPIC_MODEL}
+          Google__ServiceAccountJsonBase64=${GOOGLE_SERVICE_ACCOUNT_JSON_BASE64}
+          Google__CalendarId=${GOOGLE_CALENDAR_ID}
+          Todoist__ApiToken=${TODOIST_API_TOKEN}
+          Todoist__ProjectId=${TODOIST_PROJECT_ID}
+          API_PORT=${API_PORT}
+          CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+          EOF
+          sed -i 's/^[[:space:]]*//' .env
+
+      - name: Build and start
+        env:
+          CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+        run: |
+          PROFILE=""
+          if [ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]; then PROFILE="--profile tunnel"; fi
+          docker compose -p life-organizer $PROFILE up -d --build --remove-orphans
+
+      - name: Health check
+        run: |
+          PORT=$(grep '^API_PORT=' .env | cut -d= -f2)
+          for i in $(seq 1 20); do
+            if curl -fsS "http://127.0.0.1:${PORT:-8080}/health"; then echo; exit 0; fi
+            sleep 2
+          done
+          docker compose -p life-organizer logs --tail 100 api
+          exit 1
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -f .env
+          docker image prune -f

@@ -1,0 +1,11 @@
+bin/
+obj/
+TestResults/
+.vs/
+.idea/
+*.user
+
+# Secrets
+.env
+*service-account*.json
+*credentials*.json

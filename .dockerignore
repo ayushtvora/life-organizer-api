@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+.github/
+.vs/
+tests/
+docs/
+.env
+*.json.key
+*service-account*.json
